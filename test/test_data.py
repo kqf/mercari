@@ -1,17 +1,22 @@
 import unittest
 import pandas as pd
-from model.data import SelectColumnsTransfomer
+from model.data import SelectColumnsTransfomer, DataFrameSelector
 
 
 
 class ExploreData(unittest.TestCase):
 
-	def test(self):
+	def test_column_transfer(self):
 		df = pd.read_csv("input/train.tsv", sep='\t')
 		selector = SelectColumnsTransfomer(['item_condition_id'])
 		print(selector.fit(df).transform(df))
 
-		# print(df[['train_id', 'item_condition_id', 'brand_name', 'price', 'shipping']])
-		# print(df.columns.values)
+
+	def test_dataframe_selector(self):
+		df = pd.read_csv("input/train.tsv", sep='\t')
+		selector = DataFrameSelector(['item_condition_id'])
+		print(selector.fit(df).transform(df))
+
+
 
 
