@@ -5,7 +5,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 # Create a class to select numerical or categorical columns 
-class DataFrameSelector(BaseEstimator, TransformerMixin):
+class CategoricalSelector(BaseEstimator, TransformerMixin):
     def __init__(self, attribute_names):
         self.attribute_names = attribute_names
 
