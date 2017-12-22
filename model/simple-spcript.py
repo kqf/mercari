@@ -108,9 +108,10 @@ def build_model():
 
     pred_union = FeatureUnion(
         transformer_list=[
-            ('ridge', ridge_transformer),
+            # ('ridge', ridge_transformer),
             # ('rand_forest', RandomForestTransformer()),
-            ('lasso', SillyTransformer())
+            ('lasso1', LassoTransformer()),
+            ('lasso2', LassoTransformer())
             # ('knn', KNeighborsTransformer())
         ],
         n_jobs=-1
@@ -118,43 +119,40 @@ def build_model():
 
     model = Pipeline(steps=[
         ('read_data', data_reader()),
-        ('pred_union', pred_union),
-        ('lin_regr', LinearRegression())
+        ('svr', RidgeTransformer())
+        # ('pred_union', pred_union),
+        # ('lin_regr', LinearRegression())
     ])
 
     return model
 
-SIZE = 10000
 
-def data():
-    train = pd.read_table('input/train.tsv', engine='c').head(SIZE)
-    test = pd.read_table('input/test.tsv', engine='c').head(SIZE)
+
+def data(size = 10000):
+    train = pd.read_table('input/train.tsv', engine='c').head(size)
+    test = pd.read_table('input/test.tsv', engine='c').head(size)
     train_data = train.dropna()
     print(train_data.head())
     return train_data, np.log1p(train_data[['price']]), test.dropna()
 
-
-# TODO: Test datareader
 def main():
     with Timer("reading the data"):
         X, y, X_test = data()
 
-    submission = X_test[['test_id']]
     model = build_model()
 
     X_input = X[["item_condition_id", "brand_name"]]
-
     print(X.shape)
     print(y.values.reshape(-1, 1).shape)
-    with Timer("reading the data"):
-        model.fit(X_input, y)
+    with Timer("Training the model"):
+        model.fit(X_input, y.values)
         
-    with Timer("reading the data"):
+    with Timer("Making the predictions"):
         preds = model.predict(X=X_test)
 
-
-    submission['price'] = np.expm1(preds)
-    submission.to_csv("some-submission.csv", index=False)
+    print(preds.shape)
+    X_test['price'] = preds
+    X_test['price'].to_csv("some-submission.csv", index=False)
 
 if __name__ == '__main__':
     main()

@@ -9,12 +9,6 @@ from sklearn.feature_extraction import DictVectorizer
 
 class ExploreData(unittest.TestCase):
 
-	# def test_column_transfer(self):
-	# 	df = pd.read_csv("input/train.tsv", sep='\t')
-	# 	selector = SelectColumnsTransfomer(['item_condition_id'])
-	# 	print(selector.fit(df).transform(df))
-
-
 	def test_data_content(self):
 		df = pd.read_csv("input/train.tsv", sep='\t').dropna()
 
