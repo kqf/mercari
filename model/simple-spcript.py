@@ -79,6 +79,9 @@ class KNeighborsTransformer(KNeighborsRegressor, TransformerMixin):
     def transform(self, X, *_):
         return self.predict(X)
 
+def func(x):
+    return x.astype("category")
+
 def data_reader():
     condition = make_pipeline(
         DataFrameSelector(["item_condition_id"]),
@@ -87,7 +90,7 @@ def data_reader():
 
     brand = make_pipeline(
         SelectColumnsTransfomer(["brand_name"]),
-        DataFrameFunctionTransformer(lambda x: x.astype("category")),
+        DataFrameFunctionTransformer(func),
         CategoricalSelector(["brand_name"]),
         DictVectorizer()
     )
@@ -103,34 +106,34 @@ def build_model():
     ridge_transformer = Pipeline(steps=[
         # ('scaler', StandardScaler(with_mean=False)),
         # ('poly_feats', PolynomialFeatures()),
+        ('data_reader', data_reader()),
         ('ridge', RidgeTransformer())
     ])
 
     pred_union = FeatureUnion(
         transformer_list=[
-            # ('ridge', ridge_transformer),
+            ('ridge', ridge_transformer)
             # ('rand_forest', RandomForestTransformer()),
-            ('lasso1', LassoTransformer()),
-            ('lasso2', LassoTransformer())
+            # ('lasso1', LassoTransformer()),
+            # ('lasso2', LassoTransformer())
             # ('knn', KNeighborsTransformer())
         ],
         n_jobs=-1
     )
 
     model = Pipeline(steps=[
-        ('read_data', data_reader()),
-        ('svr', RidgeTransformer())
-        # ('pred_union', pred_union),
-        # ('lin_regr', LinearRegression())
+        # ('read_data', data_reader()),
+        ('pred_union', pred_union),
+        ('lin_regr', LinearRegression())
     ])
 
     return model
 
 
 
-def data(size = 10000):
-    train = pd.read_table('input/train.tsv', engine='c').head(size)
-    test = pd.read_table('input/test.tsv', engine='c').head(size)
+def data(size = 1000):
+    train = pd.read_table('input/train.tsv', engine='c')#.head(size)
+    test = pd.read_table('input/test.tsv', engine='c')#.head(size)
     train_data = train.dropna()
     print(train_data.head())
     return train_data, np.log1p(train_data[['price']]), test.dropna()
