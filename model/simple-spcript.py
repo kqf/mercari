@@ -38,7 +38,7 @@ class Timer(object):
 
     def __exit__(self, type, value, traceback):
         t = time.clock() - self.sstart
-        print(self.msg.format(t))
+        # print(self.msg.format(t))
 
 class SillyTransformer(TransformerMixin):
 
@@ -49,35 +49,45 @@ class SillyTransformer(TransformerMixin):
         return np.random.randn(X.shape[0])
 
     def transform(self, X, *_):
-        return self.predict(X)
+        print("Transforming shape ", X.shape)
+        result = self.predict(X)
+        print(result.shape)
+        return result
 
 class LassoTransformer(Lasso, TransformerMixin):
 
     def transform(self, X, *_):
-        return self.predict(X)
-
-class LassoTransformer(Lasso, TransformerMixin):
-
-    def transform(self, X, *_):
-        return self.predict(X)
+        print("Transforming shape ", X.shape)
+        result = self.predict(X)
+        print(result.shape)
+        return result
 
 class RidgeTransformer(Ridge, TransformerMixin):
 
 
     def transform(self, X, *_):
-        return self.predict(X)
+        print("Transforming shape ", X.shape)
+        result = self.predict(X)
+        print(result.shape)
+        return result
 
 
 class RandomForestTransformer(RandomForestRegressor, TransformerMixin):
 
     def transform(self, X, *_):
-        return self.predict(X)
+        print("Transforming shape ", X.shape)
+        result = self.predict(X)
+        print(result.shape)
+        return result.reshape(-1, 1)
 
 
 class KNeighborsTransformer(KNeighborsRegressor, TransformerMixin):
 
     def transform(self, X, *_):
-        return self.predict(X)
+        print("Transforming shape ", X.shape)
+        result = self.predict(X)
+        print(result.shape)
+        return result
 
 def func(x):
     return x.astype("category")
@@ -103,26 +113,17 @@ def data_reader():
 
 
 def build_model():
-    ridge_transformer = Pipeline(steps=[
-        # ('scaler', StandardScaler(with_mean=False)),
-        # ('poly_feats', PolynomialFeatures()),
-        ('data_reader', data_reader()),
-        ('ridge', RidgeTransformer())
-    ])
-
     pred_union = FeatureUnion(
         transformer_list=[
-            ('ridge', ridge_transformer)
-            # ('rand_forest', RandomForestTransformer()),
-            # ('lasso1', LassoTransformer()),
-            # ('lasso2', LassoTransformer())
-            # ('knn', KNeighborsTransformer())
+            ('ridge', RidgeTransformer()),
+            ('rand_forest', RandomForestTransformer()),
+            ('knn', KNeighborsTransformer())
         ],
         n_jobs=-1
     )
 
     model = Pipeline(steps=[
-        # ('read_data', data_reader()),
+        ('read_data', data_reader()),
         ('pred_union', pred_union),
         ('lin_regr', LinearRegression())
     ])
@@ -131,21 +132,21 @@ def build_model():
 
 
 
-def data(size = 1000):
-    train = pd.read_table('input/train.tsv', engine='c')#.head(size)
-    test = pd.read_table('input/test.tsv', engine='c')#.head(size)
+def data(size = 10000):
+    train = pd.read_table('input/train.tsv', engine='c').head(size)
+    test = pd.read_table('input/test.tsv', engine='c').head(size)
     train_data = train.dropna()
-    print(train_data.head())
     return train_data, np.log1p(train_data[['price']]), test.dropna()
 
 def main():
     with Timer("reading the data"):
         X, y, X_test = data()
 
+    # print(X.shape)
     model = build_model()
 
     X_input = X[["item_condition_id", "brand_name"]]
-    print(X.shape)
+    # print(X.shape)
     print(y.values.reshape(-1, 1).shape)
     with Timer("Training the model"):
         model.fit(X_input, y.values)
@@ -153,9 +154,9 @@ def main():
     with Timer("Making the predictions"):
         preds = model.predict(X=X_test)
 
-    print(preds.shape)
     X_test['price'] = preds
     X_test['price'].to_csv("some-submission.csv", index=False)
+    print("Done", preds.shape)
 
 if __name__ == '__main__':
     main()
