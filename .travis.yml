@@ -1,0 +1,18 @@
+language:
+  - python
+
+python:
+  - "3.6"
+
+before_install:
+  - sudo apt-get install unar
+
+install:
+  - pip install kaggle
+  - pip install -r requirements.txt
+
+# Run tests, one can try 
+script:
+  - kaggle competitions download -c mercari-price-suggestion-challenge -f train.tsv.7z -p data/
+  - unar data/train.tar.7z
+  - pytest -s

@@ -1,4 +1,8 @@
-config/*
 *.csv
 *.tsv
+*.7z
+*.zip
+
+# python related files
 *.pyc
+.python-version
