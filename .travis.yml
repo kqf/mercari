@@ -14,5 +14,5 @@ install:
 # Run tests, one can try 
 script:
   - kaggle competitions download -c mercari-price-suggestion-challenge -f train.tsv.7z -p data/
-  - unar data/train.tar.7z
+  - unar data/train.tar.7z -o data/
   - pytest -s
