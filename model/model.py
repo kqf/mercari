@@ -24,6 +24,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.pipeline import make_union
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
+from sklearn.base import BaseEstimator, TransformerMixin
 from typing import Dict
 from typing import List
 
@@ -34,7 +35,21 @@ os.environ['OMP_NUM_THREADS'] = '1'
 def timer(name):
     t0 = time.time()
     yield
-    print(f'[{name}] done in {time.time() - t0:.0f} s')
+    print(f"[{name}] done in {time.time() - t0:.0f} s")
+
+
+class PandasSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, columns, records=False):
+        self.columns = columns
+        self.records = records
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        if self.records:
+            return X[self.columns].to_dict(orient="records")
+        return X[self.columns]
 
 
 def preprocess(df: pd.DataFrame) -> pd.DataFrame:
@@ -73,19 +88,27 @@ def fit_predict(xs, y_train) -> np.ndarray:
                       optimizer=ks.optimizers.Adam(lr=3e-3))
         for i in range(3):
             with timer(f'epoch {i + 1}'):
-                model.fit(x=X_train, y=y_train, batch_size=2 **
-                          (11 + i), epochs=1, verbose=0)
+                model.fit(x=X_train, y=y_train, batch_size=2 ** (11 + i),
+                          epochs=1, verbose=0)
+        # NB: return without quiting the session
         return model.predict(X_test)[:, 0]
 
 
 def evaluate(train):
     vectorizer = make_union(
-        on_field('name', Tfidf(max_features=100000, token_pattern='\w+')),
-        on_field('text', Tfidf(max_features=100000,
-                               token_pattern='\w+', ngram_range=(1, 2))),
-        on_field(['shipping', 'item_condition_id'],
-                 FunctionTransformer(to_records, validate=False),
-                 DictVectorizer()),
+        make_pipeline(
+            PandasSelector("name"),
+            Tfidf(max_features=100000, token_pattern=r'\w+'),
+        ),
+        make_pipeline(
+            PandasSelector("text"),
+            Tfidf(max_features=100000, token_pattern=r'\w+',
+                  ngram_range=(1, 2)),
+        ),
+        make_pipeline(
+            PandasSelector(['shipping', 'item_condition_id'], records=True),
+            DictVectorizer()
+        ),
         n_jobs=4)
     y_scaler = StandardScaler()
 
