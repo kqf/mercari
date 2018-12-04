@@ -11,7 +11,6 @@ install:
   - pip install kaggle
   - pip install -r requirements.txt
 
-# Run tests, one can try 
 script:
   - kaggle competitions download -c mercari-price-suggestion-challenge -f train.tsv.7z -p data/
   - unar data/train.tsv.7z -o data/
